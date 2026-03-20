@@ -915,15 +915,12 @@
 
     panel.innerHTML = `
       <div class="panel-header">
-        <div class="panel-subject">Encrypted Message</div>
+        <div class="panel-subject">${m.subject_encrypted ? atob(m.subject_encrypted) : '(no subject)'}</div>
         <div class="panel-from">From: ${m.from_address}</div>
       </div>
-      <div class="encrypted-notice">🔒 This message is end-to-end encrypted. Decryption in browser coming in v0.2.</div>
-      <div class="panel-body">
-        <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">Raw encrypted payload:</p>
-        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;font-family:monospace;font-size:11px;word-break:break-all;color:var(--accent2);line-height:1.6">
-          ${m.subject_encrypted || 'N/A'}
-        </div>
+      <div class="encrypted-notice">🔒 End-to-end encrypted · Decoded locally</div>
+      <div class="panel-body" id="panel-body-content">
+        <p style="color:var(--text-dim);font-size:12px">Loading...</p>
       </div>`;
 
     // Fetch full message
