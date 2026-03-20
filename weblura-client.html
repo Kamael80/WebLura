@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WebLura</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080a0f;
+    --surface: #0d1117;
+    --surface2: #161b22;
+    --surface3: #1c2333;
+    --border: #21262d;
+    --accent: #4fa8d5;
+    --accent2: #79c0ff;
+    --accent-glow: rgba(79,168,213,0.15);
+    --text: #e6edf3;
+    --text-muted: #7d8590;
+    --text-dim: #484f58;
+    --danger: #f85149;
+    --success: #3fb950;
+    --sidebar-w: 240px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    cursor: default;
+  }
+
+  /* ── OVERLAY ── */
+  #overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn .3s ease;
+  }
+
+  @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+  @keyframes slideUp { from { opacity:0; transform:translateY(24px) } to { opacity:1; transform:translateY(0) } }
+  @keyframes pulse { 0%,100%{opacity:.6} 50%{opacity:1} }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 420px;
+    max-width: 95vw;
+    padding: 40px;
+    animation: slideUp .35s cubic-bezier(.16,1,.3,1);
+    box-shadow: 0 0 80px rgba(79,168,213,0.08), 0 32px 64px rgba(0,0,0,0.6);
+    position: relative;
+  }
+
+  .modal-logo {
+    font-family: 'Orbitron', monospace;
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    background: linear-gradient(135deg, #fff 0%, #b0d4f1 50%, #4fa8d5 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-align: center;
+    margin-bottom: 6px;
+  }
+
+  .modal-sub {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+
+  .tab-row {
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 28px;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all .2s;
+    background: transparent;
+    border: none;
+    letter-spacing: .5px;
+  }
+
+  .tab.active {
+    background: var(--accent-glow);
+    color: var(--accent2);
+    border-bottom: 2px solid var(--accent);
+  }
+
+  .form-group { margin-bottom: 16px; }
+
+  .form-group label {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  .form-group input,
+  .form-group select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 11px 14px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+    appearance: none;
+  }
+
+  .form-group input:focus,
+  .form-group select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+
+  .symbol-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .symbol-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 6px;
+    text-align: center;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all .15s;
+    color: var(--text);
+  }
+
+  .symbol-btn:hover { border-color: var(--accent); background: var(--accent-glow); }
+  .symbol-btn.selected { border-color: var(--accent); background: var(--accent-glow); box-shadow: 0 0 0 2px var(--accent); }
+
+  .btn {
+    width: 100%;
+    padding: 13px;
+    border-radius: 8px;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .2s;
+    margin-top: 8px;
+    letter-spacing: .5px;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #1f6feb, #4fa8d5);
+    color: #fff;
+  }
+  .btn-primary:hover { opacity: .88; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(79,168,213,0.3); }
+  .btn-primary:active { transform: translateY(0); }
+
+  .form-error {
+    color: var(--danger);
+    font-size: 12px;
+    margin-top: 10px;
+    text-align: center;
+    min-height: 18px;
+  }
+
+  .address-preview {
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--accent2);
+    font-family: 'Orbitron', monospace;
+    letter-spacing: 1px;
+    text-align: center;
+    margin-bottom: 16px;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── APP LAYOUT ── */
+  #app {
+    display: none;
+    height: 100vh;
+    flex-direction: column;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    height: 56px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+
+  .topbar-logo {
+    font-family: 'Orbitron', monospace;
+    font-size: 16px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    background: linear-gradient(135deg, #fff 0%, #4fa8d5 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    flex-shrink: 0;
+  }
+
+  .search-bar {
+    flex: 1;
+    max-width: 600px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 8px 18px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .search-bar:focus { border-color: var(--accent); }
+  .search-bar::placeholder { color: var(--text-dim); }
+
+  .topbar-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .user-address {
+    font-size: 12px;
+    color: var(--accent2);
+    font-family: 'Orbitron', monospace;
+    letter-spacing: 1px;
+    background: var(--accent-glow);
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(79,168,213,0.3);
+  }
+
+  .icon-btn {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    transition: all .2s;
+  }
+  .icon-btn:hover { background: var(--surface3); color: var(--text); border-color: var(--accent); }
+
+  /* MAIN */
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: var(--sidebar-w);
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 16px 12px;
+    flex-shrink: 0;
+    overflow-y: auto;
+  }
+
+  .compose-btn {
+    background: linear-gradient(135deg, #1f6feb, #4fa8d5);
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    padding: 12px 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    transition: all .2s;
+    box-shadow: 0 2px 12px rgba(79,168,213,0.2);
+  }
+  .compose-btn:hover { opacity: .88; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(79,168,213,0.3); }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-muted);
+    transition: all .15s;
+    margin-bottom: 2px;
+  }
+  .nav-item:hover { background: var(--surface3); color: var(--text); }
+  .nav-item.active { background: var(--accent-glow); color: var(--accent2); font-weight: 500; }
+  .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+  .nav-badge {
+    margin-left: auto;
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+
+  /* MESSAGE LIST */
+  .message-list {
+    flex: 1;
+    overflow-y: auto;
+    background: var(--bg);
+  }
+
+  .list-header {
+    padding: 14px 20px 10px;
+    font-size: 13px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  .message-item {
+    display: flex;
+    align-items: center;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background .15s;
+    gap: 14px;
+  }
+  .message-item:hover { background: var(--surface2); }
+  .message-item.unread { background: var(--surface); }
+  .message-item.unread .msg-subject { font-weight: 600; color: var(--text); }
+  .message-item.unread .msg-from { font-weight: 600; color: var(--text); }
+
+  .msg-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1f6feb, #4fa8d5);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+    color: #fff;
+  }
+
+  .msg-content { flex: 1; min-width: 0; }
+  .msg-from { font-size: 14px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .msg-subject { font-size: 14px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+  .msg-preview { font-size: 12px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+  .msg-time { font-size: 12px; color: var(--text-dim); flex-shrink: 0; }
+
+  .unread-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    color: var(--text-muted);
+    gap: 12px;
+  }
+  .empty-state .icon { font-size: 48px; opacity: .3; }
+  .empty-state p { font-size: 14px; }
+
+  /* MESSAGE PANEL */
+  .message-panel {
+    width: 420px;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .panel-subject {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--text);
+  }
+
+  .panel-from {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+  }
+
+  .panel-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text-muted);
+  }
+
+  .panel-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-dim);
+    gap: 12px;
+    padding: 40px;
+    text-align: center;
+  }
+  .panel-empty .icon { font-size: 40px; opacity: .2; }
+
+  .encrypted-notice {
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* COMPOSE MODAL */
+  #compose-modal {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    width: 480px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 16px 64px rgba(0,0,0,0.6);
+    z-index: 50;
+    display: none;
+    flex-direction: column;
+    animation: slideUp .25s cubic-bezier(.16,1,.3,1);
+  }
+
+  .compose-header {
+    padding: 14px 18px;
+    background: var(--surface2);
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    font-weight: 500;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .compose-body { padding: 16px; }
+
+  .compose-field {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    padding: 8px 0;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+
+  .compose-field label { font-size: 12px; color: var(--text-dim); width: 30px; flex-shrink: 0; }
+
+  .compose-field input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+  }
+
+  .compose-textarea {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    resize: none;
+    min-height: 160px;
+    padding: 12px 0;
+    line-height: 1.6;
+  }
+
+  .compose-footer {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .send-btn {
+    background: linear-gradient(135deg, #1f6feb, #4fa8d5);
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    padding: 9px 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .send-btn:hover { opacity: .88; }
+
+  .close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 18px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: color .15s;
+  }
+  .close-btn:hover { color: var(--text); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* STATUS */
+  .status-toast {
+    position: fixed;
+    bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: 13px;
+    color: var(--text);
+    z-index: 200;
+    display: none;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    animation: slideUp .2s ease;
+  }
+
+  .loading {
+    display: inline-block;
+    animation: pulse 1.2s ease infinite;
+  }
+</style>
+</head>
+<body>
+
+<!-- AUTH OVERLAY -->
+<div id="overlay">
+  <div class="modal">
+    <div class="modal-logo">WEBLURA</div>
+    <div class="modal-sub">Decentralized · Encrypted · Personal</div>
+
+    <div class="tab-row">
+      <button class="tab active" onclick="switchTab('login')">Sign In</button>
+      <button class="tab" onclick="switchTab('register')">Create Account</button>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <div id="login-form">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="login-username" placeholder="kamael" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••">
+      </div>
+      <button class="btn btn-primary" onclick="doLogin()">Sign In</button>
+      <div class="form-error" id="login-error"></div>
+    </div>
+
+    <!-- REGISTER FORM -->
+    <div id="register-form" style="display:none">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="reg-username" placeholder="kamael" autocomplete="off" oninput="updatePreview()">
+      </div>
+      <div class="form-group">
+        <label>Choose your symbol</label>
+        <div class="symbol-grid" id="symbol-grid"></div>
+      </div>
+      <div class="address-preview" id="address-preview">your-address will appear here</div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="reg-password" placeholder="••••••••">
+      </div>
+      <button class="btn btn-primary" onclick="doRegister()">Create Account</button>
+      <div class="form-error" id="reg-error"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-logo">WEBLURA</div>
+    <input class="search-bar" placeholder="Search messages...">
+    <div class="topbar-right">
+      <div class="user-address" id="topbar-address"></div>
+      <button class="icon-btn" title="Refresh" onclick="loadInbox()">↻</button>
+      <button class="icon-btn" title="Sign out" onclick="signOut()">⏻</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="sidebar">
+      <button class="compose-btn" onclick="openCompose()">
+        ✏️ Compose
+      </button>
+      <div class="nav-item active" onclick="loadInbox()">
+        <span class="icon">📥</span> Inbox
+        <span class="nav-badge" id="unread-badge" style="display:none">0</span>
+      </div>
+      <div class="nav-item">
+        <span class="icon">📤</span> Sent
+      </div>
+      <div class="nav-item">
+        <span class="icon">⭐</span> Starred
+      </div>
+      <div class="nav-item">
+        <span class="icon">🗑️</span> Trash
+      </div>
+    </div>
+
+    <div class="message-list" id="message-list">
+      <div class="list-header">
+        📥 Inbox
+      </div>
+      <div class="empty-state">
+        <div class="icon">📭</div>
+        <p>Your inbox is empty</p>
+        <p style="font-size:12px;opacity:.5">Messages sent to your address will appear here</p>
+      </div>
+    </div>
+
+    <div class="message-panel" id="message-panel">
+      <div class="panel-empty">
+        <div class="icon">✉️</div>
+        <p style="font-size:14px;color:var(--text-muted)">Select a message to read it</p>
+        <p style="font-size:12px;color:var(--text-dim);margin-top:4px">All messages are end-to-end encrypted</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COMPOSE WINDOW -->
+<div id="compose-modal">
+  <div class="compose-header">
+    <span>New Message</span>
+    <button class="close-btn" onclick="closeCompose()">✕</button>
+  </div>
+  <div class="compose-body">
+    <div class="compose-field">
+      <label>To</label>
+      <input type="text" id="compose-to" placeholder="username⃤domain.com">
+    </div>
+    <div class="compose-field">
+      <label>Subject</label>
+      <input type="text" id="compose-subject" placeholder="Subject">
+    </div>
+    <textarea class="compose-textarea" id="compose-body" placeholder="Write your message..."></textarea>
+  </div>
+  <div class="compose-footer">
+    <button class="send-btn" onclick="sendMessage()">Send ↗</button>
+    <span style="font-size:11px;color:var(--text-dim)">🔒 End-to-end encrypted</span>
+  </div>
+</div>
+
+<div class="status-toast" id="toast"></div>
+
+<script>
+  const API = 'https://weblura.onrender.com';
+  const SYMBOLS = ['⃤','~','!','*','^','%','&','=','+','?','>','§','¤','°','•'];
+  let session = null;
+  let selectedSymbol = '⃤';
+  let messages = [];
+  let selectedMessage = null;
+
+  // ── INIT ──
+  function init() {
+    buildSymbolGrid();
+    const saved = localStorage.getItem('wl_session');
+    if (saved) {
+      session = JSON.parse(saved);
+      showApp();
+      loadInbox();
+    }
+  }
+
+  function buildSymbolGrid() {
+    const grid = document.getElementById('symbol-grid');
+    SYMBOLS.forEach(s => {
+      const btn = document.createElement('button');
+      btn.className = 'symbol-btn' + (s === selectedSymbol ? ' selected' : '');
+      btn.textContent = s;
+      btn.onclick = () => {
+        selectedSymbol = s;
+        document.querySelectorAll('.symbol-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        updatePreview();
+      };
+      grid.appendChild(btn);
+    });
+  }
+
+  function updatePreview() {
+    const u = document.getElementById('reg-username').value.trim() || 'username';
+    document.getElementById('address-preview').textContent = `${u}${selectedSymbol}weblura.onrender.com`;
+  }
+
+  // ── TABS ──
+  function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', (i===0 && tab==='login') || (i===1 && tab==='register')));
+    document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
+    document.getElementById('register-form').style.display = tab === 'register' ? 'block' : 'none';
+  }
+
+  // ── AUTH ──
+  async function doLogin() {
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-password').value;
+    const err = document.getElementById('login-error');
+    err.textContent = '';
+
+    if (!username || !password) { err.textContent = 'Please fill in all fields.'; return; }
+
+    err.innerHTML = '<span class="loading">Signing in...</span>';
+    try {
+      const res = await fetch(`${API}/messages/inbox`, {
+        headers: { 'x-username': username, 'x-password': password }
+      });
+      if (!res.ok) { err.textContent = 'Invalid username or password.'; return; }
+      const data = await res.json();
+      session = { username, password, address: data.address };
+      localStorage.setItem('wl_session', JSON.stringify(session));
+      showApp();
+      loadInbox();
+    } catch(e) {
+      err.textContent = 'Could not connect to server.';
+    }
+  }
+
+  async function doRegister() {
+    const username = document.getElementById('reg-username').value.trim();
+    const password = document.getElementById('reg-password').value;
+    const err = document.getElementById('reg-error');
+    err.textContent = '';
+
+    if (!username || !password) { err.textContent = 'Please fill in all fields.'; return; }
+    if (password.length < 6) { err.textContent = 'Password must be at least 6 characters.'; return; }
+
+    err.innerHTML = '<span class="loading">Creating account...</span>';
+    try {
+      const res = await fetch(`${API}/users/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, symbol: selectedSymbol, password })
+      });
+      const data = await res.json();
+      if (!res.ok) { err.textContent = data.detail || 'Registration failed.'; return; }
+
+      // Save private key
+      localStorage.setItem('wl_privkey_' + username, data.private_key_encrypted);
+      session = { username, password, address: data.address };
+      localStorage.setItem('wl_session', JSON.stringify(session));
+      showApp();
+      showToast('🎉 Welcome to WebLura! Your address: ' + data.address);
+    } catch(e) {
+      err.textContent = 'Could not connect to server.';
+    }
+  }
+
+  function signOut() {
+    session = null;
+    localStorage.removeItem('wl_session');
+    messages = [];
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('overlay').style.display = 'flex';
+    document.getElementById('login-username').value = '';
+    document.getElementById('login-password').value = '';
+    switchTab('login');
+  }
+
+  // ── APP ──
+  function showApp() {
+    document.getElementById('overlay').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    document.getElementById('topbar-address').textContent = session.address;
+  }
+
+  async function loadInbox() {
+    const list = document.getElementById('message-list');
+    list.innerHTML = `<div class="list-header">📥 Inbox</div><div class="empty-state"><div class="icon loading">⏳</div><p>Loading messages...</p></div>`;
+
+    try {
+      const res = await fetch(`${API}/messages/inbox`, {
+        headers: { 'x-username': session.username, 'x-password': session.password }
+      });
+      if (!res.ok) { signOut(); return; }
+      const data = await res.json();
+      messages = data.inbox || [];
+      renderInbox();
+    } catch(e) {
+      list.innerHTML = `<div class="list-header">📥 Inbox</div><div class="empty-state"><div class="icon">⚠️</div><p>Could not load inbox</p></div>`;
+    }
+  }
+
+  function renderInbox() {
+    const list = document.getElementById('message-list');
+    const unread = messages.filter(m => !m.read).length;
+
+    const badge = document.getElementById('unread-badge');
+    if (unread > 0) { badge.style.display = 'inline'; badge.textContent = unread; }
+    else badge.style.display = 'none';
+
+    if (messages.length === 0) {
+      list.innerHTML = `<div class="list-header">📥 Inbox</div><div class="empty-state"><div class="icon">📭</div><p>Your inbox is empty</p><p style="font-size:12px;opacity:.5">Messages sent to your address will appear here</p></div>`;
+      return;
+    }
+
+    let html = `<div class="list-header">📥 Inbox &nbsp;·&nbsp; ${messages.length} message${messages.length!==1?'s':''}</div>`;
+    messages.forEach((m, i) => {
+      const initials = m.from_address ? m.from_address[0].toUpperCase() : '?';
+      const time = new Date(m.timestamp).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+      html += `
+        <div class="message-item ${m.read ? '' : 'unread'}" onclick="selectMessage(${i})">
+          ${!m.read ? '<div class="unread-dot"></div>' : '<div style="width:8px"></div>'}
+          <div class="msg-avatar">${initials}</div>
+          <div class="msg-content">
+            <div class="msg-from">${m.from_address}</div>
+            <div class="msg-subject">Encrypted message</div>
+            <div class="msg-preview">🔒 Content is encrypted</div>
+          </div>
+          <div class="msg-time">${time}</div>
+        </div>`;
+    });
+    list.innerHTML = html;
+  }
+
+  async function selectMessage(i) {
+    const m = messages[i];
+    selectedMessage = m;
+    const panel = document.getElementById('message-panel');
+
+    panel.innerHTML = `
+      <div class="panel-header">
+        <div class="panel-subject">Encrypted Message</div>
+        <div class="panel-from">From: ${m.from_address}</div>
+      </div>
+      <div class="encrypted-notice">🔒 This message is end-to-end encrypted. Decryption in browser coming in v0.2.</div>
+      <div class="panel-body">
+        <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">Raw encrypted payload:</p>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;font-family:monospace;font-size:11px;word-break:break-all;color:var(--accent2);line-height:1.6">
+          ${m.subject_encrypted || 'N/A'}
+        </div>
+      </div>`;
+
+    // Fetch full message
+    try {
+      const res = await fetch(`${API}/messages/${m.id}`, {
+        headers: { 'x-username': session.username, 'x-password': session.password }
+      });
+      if (res.ok) {
+        messages[i].read = true;
+        renderInbox();
+      }
+    } catch(e) {}
+  }
+
+  // ── COMPOSE ──
+  function openCompose() {
+    const modal = document.getElementById('compose-modal');
+    modal.style.display = 'flex';
+  }
+
+  function closeCompose() {
+    document.getElementById('compose-modal').style.display = 'none';
+    document.getElementById('compose-to').value = '';
+    document.getElementById('compose-subject').value = '';
+    document.getElementById('compose-body').value = '';
+  }
+
+  async function sendMessage() {
+    const to = document.getElementById('compose-to').value.trim();
+    const subject = document.getElementById('compose-subject').value.trim();
+    const body = document.getElementById('compose-body').value.trim();
+
+    if (!to || !body) { showToast('⚠️ Please fill in recipient and message.'); return; }
+
+    // For v0.1 we send plaintext encoded as base64 (real E2E in v0.2)
+    const subjectEncoded = btoa(subject || '(no subject)');
+    const bodyEncoded = btoa(body);
+
+    try {
+      const res = await fetch(`${API}/messages/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from_address: session.address,
+          to_address: to,
+          subject_encrypted: subjectEncoded,
+          body_encrypted: bodyEncoded,
+          sender_public_key: localStorage.getItem('wl_privkey_' + session.username) || 'N/A',
+          signature: 'v01-placeholder'
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        closeCompose();
+        showToast('✅ Message sent to ' + to);
+      } else {
+        showToast('❌ ' + (data.detail || 'Failed to send'));
+      }
+    } catch(e) {
+      showToast('❌ Could not connect to server');
+    }
+  }
+
+  // ── TOAST ──
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 3500);
+  }
+
+  init();
+</script>
+</body>
+</html>
