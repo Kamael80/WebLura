@@ -929,12 +929,13 @@
         headers: { 'x-username': session.username, 'x-password': session.password }
       });
       if (res.ok) {
+        const full = await res.json();
+        const body = full.body_encrypted ? atob(full.body_encrypted) : '(empty)';
+        document.getElementById('panel-body-content').innerHTML = `
+          <p style="line-height:1.8;color:var(--text)">${body}</p>`;
         messages[i].read = true;
         renderInbox();
       }
-    } catch(e) {}
-  }
-
   // ── COMPOSE ──
   function openCompose() {
     const modal = document.getElementById('compose-modal');
